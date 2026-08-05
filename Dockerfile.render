@@ -1,0 +1,73 @@
+# syntax=docker/dockerfile:1
+
+# ---- Stage 1: build des assets front (Vite) ----
+FROM node:20-alpine AS node-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY resources ./resources
+COPY vite.config.js ./
+COPY public ./public
+RUN npm run build
+
+# ---- Stage 2: image finale (nginx + php-fpm dans le même conteneur) ----
+FROM php:8.2-fpm
+
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    gettext-base \
+    libpq-dev \
+    libicu-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    postgresql-client \
+    unzip \
+    git \
+    curl \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo_pgsql \
+        intl \
+        zip \
+        gd \
+        bcmath \
+        opcache \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY . .
+COPY --from=node-builder /app/public/build ./public/build
+RUN rm -f public/hot
+
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+RUN mkdir -p storage/framework/sessions \
+    storage/framework/views \
+    storage/framework/cache/data \
+    storage/logs \
+    bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Config nginx (template substitué au démarrage avec le $PORT fourni par l'hébergeur)
+RUN mkdir -p /etc/nginx/templates
+COPY docker/nginx/render.conf.template /etc/nginx/templates/render.conf.template
+RUN rm -f /etc/nginx/sites-enabled/default
+
+# Config supervisord (fait tourner nginx + php-fpm ensemble)
+RUN mkdir -p /etc/supervisor/conf.d
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+COPY docker/entrypoint-render.sh /usr/local/bin/entrypoint-render.sh
+RUN chmod +x /usr/local/bin/entrypoint-render.sh
+
+EXPOSE 10000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint-render.sh"]

@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    user: root  # IMPORTANT : Démarrer en root pour pouvoir modifier les permissions
+    volumes:
+      - ./:/var/www/html:cached
+      - public_build:/var/www/html/public/build
+      # NE PAS monter storage et bootstrap/cache en volumes !
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=realestate
+      - DB_USERNAME=realuser
+      - DB_PASSWORD=secretpassword
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=${APP_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laravel
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  db:
+    image: postgres:15-alpine
+    container_name: laravel_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: realestate
+      POSTGRES_USER: realuser
+      POSTGRES_PASSWORD: secretpassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U realuser -d realestate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  public_build:
+    driver: local
