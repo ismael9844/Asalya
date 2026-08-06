@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <a href="{{ route('landing') }}" class="flex items-center space-x-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="Asalya Investment Logo" class="h-12 w-auto">
+                    <img src="{{ asset('images/logo.png') }}" alt="Asalya Investment Logo" class="h-12 w-auto rounded-xl">
                 </a>
             </div>
 
@@ -23,10 +23,6 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <button id="dark-mode-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-moon text-gray-600 dark:text-gray-300"></i>
-                </button>
-
                 <button id="lang-toggle" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors">
                     <span id="current-lang" class="font-semibold text-gray-800 dark:text-white">🇬🇧 EN</span>
                 </button>

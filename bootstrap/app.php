@@ -15,7 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
         ]);
-        
+
+        // Faire confiance au proxy inversé de Render (et tout autre hébergeur similaire)
+        // pour que Laravel sache que la requête originale était en HTTPS et génère
+        // des URLs/formulaires en https:// (sinon : avertissement "connexion non sécurisée").
+        $middleware->trustProxies(at: '*');
+
         // ❌ NE PAS ajouter au groupe web globalement
         // $middleware->prependToGroup('web', \App\Http\Middleware\IsAdmin::class);
     })

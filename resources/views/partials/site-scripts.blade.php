@@ -1,28 +1,4 @@
 <script>
-// Dark Mode (shared header)
-(function () {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const body = document.body;
-    if (!darkModeToggle) return;
-    const darkModeIcon = darkModeToggle.querySelector('i');
-
-    if (localStorage.getItem('darkMode') === 'enabled') {
-        body.classList.add('dark-mode');
-        darkModeIcon.classList.replace('fa-moon', 'fa-sun');
-    }
-
-    darkModeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-        if (body.classList.contains('dark-mode')) {
-            darkModeIcon.classList.replace('fa-moon', 'fa-sun');
-            localStorage.setItem('darkMode', 'enabled');
-        } else {
-            darkModeIcon.classList.replace('fa-sun', 'fa-moon');
-            localStorage.setItem('darkMode', 'disabled');
-        }
-    });
-})();
-
 // Language Toggle (shared header)
 window.currentLang = 'en';
 (function () {
