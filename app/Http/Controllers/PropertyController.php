@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Property;
-use App\Services\ImgBBService;
+use App\Services\CloudStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\App;
@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class PropertyController extends Controller
 {
-    protected $imgbb;
+    protected $uploader;
 
-    public function __construct(ImgBBService $imgbb)
+    public function __construct(CloudStorageService $uploader)
     {
-        $this->imgbb = $imgbb;
+        $this->uploader = $uploader;
     }
 
     /**
@@ -63,17 +63,17 @@ class PropertyController extends Controller
         
         if ($request->hasFile('images')) {
             try {
-                $imageUrls = $this->imgbb->uploadMultiple($request->file('images'));
+                $imageUrls = $this->uploader->uploadMultiple($request->file('images'));
                 
                 if (empty($imageUrls)) {
                     return back()
-                        ->withErrors(['images' => 'Failed to upload images to ImgBB. Please try again.'])
+                        ->withErrors(['images' => 'Failed to upload images. Please try again.'])
                         ->withInput();
                 }
                 
-                Log::info('Images uploaded to ImgBB', ['count' => count($imageUrls), 'urls' => $imageUrls]);
+                Log::info('Images uploaded', ['count' => count($imageUrls), 'urls' => $imageUrls]);
             } catch (\Exception $e) {
-                Log::error('ImgBB upload error', ['error' => $e->getMessage()]);
+                Log::error('Image upload error', ['error' => $e->getMessage()]);
                 return back()
                     ->withErrors(['images' => 'Error uploading images: ' . $e->getMessage()])
                     ->withInput();
@@ -149,10 +149,10 @@ class PropertyController extends Controller
         $newImageUrls = [];
         if ($request->hasFile('images')) {
             try {
-                $newImageUrls = $this->imgbb->uploadMultiple($request->file('images'));
-                Log::info('New images uploaded to ImgBB', ['count' => count($newImageUrls)]);
+                $newImageUrls = $this->uploader->uploadMultiple($request->file('images'));
+                Log::info('New images uploaded', ['count' => count($newImageUrls)]);
             } catch (\Exception $e) {
-                Log::error('ImgBB upload error during update', ['error' => $e->getMessage()]);
+                Log::error('Image upload error during update', ['error' => $e->getMessage()]);
                 return back()
                     ->withErrors(['images' => 'Error uploading new images.'])
                     ->withInput();
@@ -188,8 +188,7 @@ class PropertyController extends Controller
      */
     public function destroy(Request $request, Property $property)
     {
-        // Note: Les images sur ImgBB restent stockées (pas de suppression automatique)
-        // Si vous voulez les supprimer, vous devrez utiliser l'API ImgBB delete endpoint
+        // Note: Les images sur Cloudinary restent stockées (pas de suppression automatique)
         
         $property->delete();
         
