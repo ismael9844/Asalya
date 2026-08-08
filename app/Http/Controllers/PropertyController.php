@@ -145,16 +145,23 @@ class PropertyController extends Controller
             $existingImages = array_values($existingImages); // Réindexer
         }
         
-        // Upload de nouvelles images vers ImgBB
+        // Upload de nouvelles images vers le stockage cloud
         $newImageUrls = [];
         if ($request->hasFile('images')) {
             try {
                 $newImageUrls = $this->uploader->uploadMultiple($request->file('images'));
+
+                if (empty($newImageUrls)) {
+                    return back()
+                        ->withErrors(['images' => 'Failed to upload the new image(s). Please check your storage configuration and try again.'])
+                        ->withInput();
+                }
+
                 Log::info('New images uploaded', ['count' => count($newImageUrls)]);
             } catch (\Exception $e) {
                 Log::error('Image upload error during update', ['error' => $e->getMessage()]);
                 return back()
-                    ->withErrors(['images' => 'Error uploading new images.'])
+                    ->withErrors(['images' => 'Error uploading new images: ' . $e->getMessage()])
                     ->withInput();
             }
         }

@@ -290,6 +290,17 @@
         <p>Update the fields below — all changes save on submit.</p>
     </div>
 
+    @if ($errors->any())
+        <div style="background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b;padding:14px 18px;border-radius:8px;margin-bottom:16px;">
+            <strong style="display:block;margin-bottom:4px;">Please fix the following:</strong>
+            <ul style="margin:0;padding-left:18px;">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('properties.update', $property->id) }}" method="POST"
           enctype="multipart/form-data" id="ep-form">
         @csrf
